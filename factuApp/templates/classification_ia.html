@@ -1,0 +1,247 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Assistant IA commercial</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 24px 14px;
+            font-family: Arial, sans-serif;
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+        main { max-width: 1000px; margin: auto; }
+        header {
+            background: #1e40af;
+            color: white;
+            padding: 26px;
+            border-radius: 14px;
+            margin-bottom: 20px;
+        }
+        header h1 { margin-top: 0; }
+        .card {
+            background: white;
+            padding: 22px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px #0000000d;
+        }
+        h2 { color: #1d4ed8; margin-top: 0; }
+        h3 { margin-bottom: 8px; }
+        label { display: block; font-weight: bold; margin: 14px 0 6px; }
+        input, textarea {
+            width: 100%;
+            padding: 11px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font: inherit;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+        button {
+            background: #1d4ed8;
+            color: white;
+            border: 0;
+            padding: 12px 18px;
+            margin-top: 18px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover { background: #1e3a8a; }
+        .result {
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            padding: 16px;
+            margin-top: 15px;
+            border-radius: 8px;
+            overflow-wrap: anywhere;
+        }
+        .warning {
+            background: #fff7ed;
+            border: 1px solid #fed7aa;
+            padding: 14px;
+            border-radius: 8px;
+            margin: 12px 0;
+        }
+        .error {
+            background: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+            padding: 14px;
+            border-radius: 8px;
+            margin-bottom: 18px;
+        }
+        pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+        li { margin-bottom: 9px; }
+        .muted { color: #64748b; font-size: 0.92rem; }
+        @media (max-width: 650px) {
+            .grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<main>
+    <header>
+        <h1>Assistant IA commercial</h1>
+        <p>
+            Classification intelligente des factures et aide à la décision
+            pour les prix, les marges et la négociation commerciale.
+        </p>
+    </header>
+
+    {% if erreur %}
+    <div class="error">
+        <strong>Attention :</strong> {{ erreur }}
+    </div>
+    {% endif %}
+
+    <section class="card">
+        <h2>1. Classification IA des factures</h2>
+        <p class="muted">
+            Importez un PDF contenant du texte sélectionnable pour proposer
+            une catégorie comptable.
+        </p>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="classification">
+
+            <label for="document">Facture au format PDF</label>
+            <input type="file" id="document" name="document"
+                   accept=".pdf,application/pdf" required>
+
+            <button type="submit">Analyser la facture</button>
+        </form>
+
+        {% if resultat %}
+        <div class="result">
+            <h3>Résultat de la classification</h3>
+            <p><strong>Catégorie proposée :</strong> {{ resultat.categorie }}</p>
+            <p><strong>Score indicatif :</strong> {{ resultat.confiance }} %</p>
+            <p><strong>Exemples utilisés :</strong> {{ resultat.nombre_exemples }}</p>
+            <h3>Exemple similaire</h3>
+            <p><strong>Catégorie :</strong> {{ resultat.categorie_exemple }}</p>
+            <pre>{{ resultat.exemple_proche }}</pre>
+            <h3>Texte extrait</h3>
+            <pre>{{ resultat.texte_extrait }}</pre>
+        </div>
+        {% endif %}
+    </section>
+
+    <section class="card">
+        <h2>2. Assistant de décision commerciale</h2>
+        <p class="muted">
+            Saisissez les données d'un produit pour obtenir des calculs de
+            marge, une proposition de remise et des recommandations commerciales.
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="commercial">
+
+            <div class="grid">
+                <div>
+                    <label for="nom_produit">Nom du produit</label>
+                    <input id="nom_produit" name="nom_produit"
+                           placeholder="Ex. : Ordinateur portable">
+                </div>
+                <div>
+                    <label for="cout">Coût d'achat (Ar)</label>
+                    <input id="cout" name="cout" type="number"
+                           min="0" step="any" required placeholder="7000">
+                </div>
+                <div>
+                    <label for="prix">Prix de vente actuel (Ar)</label>
+                    <input id="prix" name="prix" type="number"
+                           min="0.01" step="any" required placeholder="10000">
+                </div>
+                <div>
+                    <label for="marge_cible">Marge minimale souhaitée (%)</label>
+                    <input id="marge_cible" name="marge_cible" type="number"
+                           min="0" max="99.99" step="any" value="20" required>
+                </div>
+                <div>
+                    <label for="remise_demandee">Remise demandée (%)</label>
+                    <input id="remise_demandee" name="remise_demandee"
+                           type="number" min="0" max="99.99" step="any"
+                           value="0" required>
+                </div>
+                <div>
+                    <label for="prix_historique">Prix historique (facultatif, Ar)</label>
+                    <input id="prix_historique" name="prix_historique"
+                           type="number" min="0.01" step="any"
+                           placeholder="Ex. : 9500">
+                </div>
+            </div>
+
+            <label for="profil_client">Informations sur le client</label>
+            <textarea id="profil_client" name="profil_client" rows="3"
+                      placeholder="Ex. : client régulier, budget limité, préfère les achats groupés"></textarea>
+
+            <label for="produits_complementaires">
+                Produits complémentaires disponibles
+            </label>
+            <textarea id="produits_complementaires"
+                      name="produits_complementaires" rows="2"
+                      placeholder="Séparez les produits par des virgules"></textarea>
+
+            <button type="submit">Analyser et proposer une stratégie</button>
+        </form>
+
+        {% if commercial %}
+        <div class="result">
+            <h3>Résultats de l'analyse commerciale</h3>
+            <p><strong>Produit :</strong> {{ commercial.nom_produit }}</p>
+            <p><strong>Prix minimal selon la marge cible :</strong>
+                {{ commercial.prix_minimum }} Ar</p>
+            <p><strong>Remise maximale théorique :</strong>
+                {{ commercial.remise_max }} %</p>
+            <p><strong>Remise conseillée :</strong>
+                {{ commercial.remise_conseillee }} %</p>
+            <p><strong>Remise retenue :</strong>
+                {{ commercial.remise_proposee }} %</p>
+            <p><strong>Prix après remise :</strong>
+                {{ commercial.prix_apres_remise }} Ar</p>
+            <p><strong>Marge calculée après remise :</strong>
+                {{ commercial.marge_reelle }} %</p>
+
+            <h3>Pourquoi cette remise ?</h3>
+            <p>{{ commercial.justification }}</p>
+
+            <h3>Détection d'un prix inhabituel</h3>
+            <div class="warning">{{ commercial.alerte_prix }}</div>
+
+            <h3>Analyse du profil client</h3>
+            <p>{{ commercial.analyse_profil }}</p>
+
+            <h3>Recommandations de produits complémentaires</h3>
+            <p>{{ commercial.cross_selling }}</p>
+
+            <h3>Stratégies de négociation</h3>
+            <ol>
+                {% for strategie in commercial.strategies %}
+                <li>{{ strategie }}</li>
+                {% endfor %}
+            </ol>
+
+            <h3>Argumentaire commercial proposé</h3>
+            <p>{{ commercial.argumentaire }}</p>
+
+            <p class="muted">
+                Les propositions sont indicatives. Vérifiez les coûts, les
+                taxes et les contraintes commerciales avant de valider une vente.
+            </p>
+        </div>
+        {% endif %}
+    </section>
+</main>
+</body>
+</html>
+

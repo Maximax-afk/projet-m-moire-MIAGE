@@ -1,0 +1,222 @@
+{% load l10n %}<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapports & Stats - FactuApp</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        body { min-height: 100vh; background-color: #f8f9fa; }
+        .sidebar { width: 280px; min-height: 100vh; background-color: #0f172a; }
+        .nav-link { color: #94a3b8; font-size: 0.9rem; border-radius: 8px; padding: 8px 12px; margin-bottom: 3px; }
+        .nav-link:hover { color: #ffffff; background-color: #1e293b; }
+        .nav-link.active { color: #ffffff; background-color: #4f46e5; }
+        .section-title { font-size: 0.7rem; text-transform: uppercase; font-weight: 700; color: #64748b; padding: 10px 12px 4px 12px; }
+        .card-title-sm { font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: #6c757d; }
+        .thead-sm { font-size: 0.75rem; text-transform: uppercase; }
+        /* Barres du graphique : la hauteur vient de data-pct (voir le script en bas de page) */
+        .barre { height: 0; min-height: 3px; }
+        .barre[data-pct="0"] { min-height: 0; }
+        /* Impression : on ne garde que le rapport */
+        @media print {
+            .sidebar, .no-print, header { display: none !important; }
+            body { display: block !important; background: #fff !important; }
+            main { height: auto !important; overflow: visible !important; }
+            .card { box-shadow: none !important; border: 1px solid #dee2e6 !important; break-inside: avoid; }
+        }
+    </style>
+</head>
+<body class="d-flex">
+    <aside class="sidebar text-white d-flex flex-column flex-shrink-0 shadow">
+        <div class="d-flex align-items-center gap-3 p-3 border-bottom border-secondary border-opacity-25" style="height: 70px;">
+            <div class="bg-primary text-white rounded-3 fw-bold d-flex align-items-center justify-content-center fs-5 shadow-sm" style="width: 40px; height: 40px;">F</div>
+            <div>
+                <h6 class="mb-0 fw-bold text-uppercase text-white">Factura<span class="text-primary">Pro</span></h6>
+                <small class="text-secondary" style="font-size: 0.65rem;">GESTION COMMERCIALE</small>
+            </div>
+        </div>
+        <nav class="p-3 flex-grow-1 overflow-auto">
+            <a href="/" class="nav-link d-flex align-items-center gap-2"><i class="bi bi-grid-1x2-fill"></i><span>Tableau de bord</span></a>
+            <a href="/facture.html" class="nav-link d-flex align-items-center gap-2"><i class="bi bi-receipt text-info"></i><span>Factures</span></a>
+            <a href="/devis.html" class="nav-link d-flex align-items-center gap-2"><i class="bi bi-file-earmark-text text-primary"></i><span>Devis & Estimations</span></a>
+            <a href="/clients.html" class="nav-link d-flex align-items-center gap-2"><i class="bi bi-people text-warning"></i><span>Clients</span></a>
+            <a href="/produits.html" class="nav-link d-flex align-items-center gap-2"><i class="bi bi-box-seam text-success"></i><span>Produits & Services</span></a>
+            <a href="/paiements.html" class="nav-link d-flex align-items-center gap-2"><i class="bi bi-credit-card text-success"></i><span>Paiements</span></a>
+            <a href="/recherche.html" class="nav-link d-flex align-items-center gap-2"><i class="bi bi-search text-danger"></i><span>Recherche de factures</span></a>
+            <a href="/rapports.html" class="nav-link active d-flex align-items-center gap-2"><i class="bi bi-bar-chart-line text-warning"></i><span>Rapports & Stats</span></a>
+            <a href="/utilisateurs.html" class="nav-link d-flex align-items-center gap-2"><i class="bi bi-gear text-secondary"></i><span>Gestion des utilisateurs</span></a>
+        </nav>
+    </aside>
+
+    <main class="flex-grow-1 d-flex flex-column vh-100 overflow-auto">
+        <header class="bg-white border-bottom px-4 d-flex align-items-center justify-content-between flex-shrink-0" style="height: 70px;">
+            <div>
+                <h5 class="mb-0 fw-bold text-dark">Rapports & Stats</h5>
+                <small class="text-muted">Synthèse financière en Ariary (Ar)</small>
+            </div>
+            <div class="d-flex gap-2">
+                {% if acces.exporter %}
+                <div class="dropdown">
+                    <button class="btn btn-primary btn-sm px-3 rounded-pill fw-semibold dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-download me-1"></i> Exporter</button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                        <li><a class="dropdown-item" href="{% url 'export_factures' 'pdf' %}?source=rapport&{{ query_string }}"><i class="bi bi-file-earmark-pdf text-danger me-2"></i>PDF</a></li>
+                        <li><a class="dropdown-item" href="{% url 'export_factures' 'excel' %}?source=rapport&{{ query_string }}"><i class="bi bi-file-earmark-excel text-success me-2"></i>Excel (.xlsx)</a></li>
+                        <li><a class="dropdown-item" href="{% url 'export_factures' 'csv' %}?source=rapport&{{ query_string }}"><i class="bi bi-filetype-csv text-secondary me-2"></i>CSV</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><button type="button" class="dropdown-item" onclick="window.print()"><i class="bi bi-printer me-2"></i>Imprimer</button></li>
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+        </header>
+
+        <div class="p-4">
+            {% for m in messages %}
+            <div class="alert alert-{% if m.tags == 'error' %}danger{% else %}{{ m.tags|default:'info' }}{% endif %} alert-dismissible fade show py-2 no-print" role="alert">{{ m }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+            {% endfor %}
+
+            <!-- Filtres -->
+            <div class="card border-0 shadow-sm rounded-3 mb-4 bg-white no-print"><div class="card-body p-4">
+                <h6 class="card-title-sm mb-3">Période et filtres du rapport</h6>
+                <form method="get" action="/rapports.html" class="row g-3">
+                    <div class="col-md-2"><label class="form-label small fw-semibold text-secondary">Du</label><input type="date" name="date_debut" value="{{ date_debut }}" class="form-control form-control-sm"></div>
+                    <div class="col-md-2"><label class="form-label small fw-semibold text-secondary">Au</label><input type="date" name="date_fin" value="{{ date_fin }}" class="form-control form-control-sm"></div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-semibold text-secondary">Statut</label>
+                        <select name="q_statut" class="form-select form-select-sm">
+                            <option value="Tous">Toutes les factures validées</option>
+                            {% for v,l in statuts %}<option value="{{ v }}" {% if q_statut == v %}selected{% endif %}>{{ l }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label small fw-semibold text-secondary">Client</label>
+                        <select name="q_client" class="form-select form-select-sm"><option value="">Tous les clients</option>{% for c in liste_clients %}<option value="{{ c.pk }}" {% if q_client == c.pk|stringformat:"d" %}selected{% endif %}>{{ c.nom_ou_raison_sociale }}</option>{% endfor %}</select>
+                    </div>
+                    <div class="col-md-4"><label class="form-label small fw-semibold text-secondary">Recherche (N° Facture, Client, NIF, Ville)</label><input type="text" name="q_mot_cle" value="{{ q_mot_cle }}" class="form-control form-control-sm"></div>
+                    <div class="col-md-2"><label class="form-label small fw-semibold text-secondary">Montant TTC min</label><input type="number" min="0" name="montant_min" value="{{ montant_min }}" class="form-control form-control-sm"></div>
+                    <div class="col-md-2"><label class="form-label small fw-semibold text-secondary">Montant TTC max</label><input type="number" min="0" name="montant_max" value="{{ montant_max }}" class="form-control form-control-sm"></div>
+                    {% if vendeurs %}<div class="col-md-2"><label class="form-label small fw-semibold text-secondary">Vendeur</label>
+                        <select name="vendeur" class="form-select form-select-sm"><option value="">Tous</option>{% for v in vendeurs %}<option value="{{ v.pk }}" {% if request.GET.vendeur == v.pk|stringformat:"d" %}selected{% endif %}>{{ v.get_full_name|default:v.username }}</option>{% endfor %}</select></div>{% endif %}
+                    <div class="col-md-2 d-flex align-items-end gap-2">
+                        <button type="submit" class="btn btn-primary btn-sm px-4 rounded-pill fw-semibold"><i class="bi bi-funnel me-1"></i> Appliquer</button>
+                        <a href="/rapports.html" class="btn btn-outline-secondary btn-sm rounded-pill" title="Réinitialiser"><i class="bi bi-arrow-counterclockwise"></i></a>
+                    </div>
+                </form>
+            </div></div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-3"><div class="card border-0 shadow-sm rounded-3 p-3 bg-white">
+                    <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Chiffre d'Affaires HT</small>
+                    <h4 class="fw-bolder text-dark mt-2 mb-0">{{ total_ht|floatformat:"0g" }} Ar</h4>
+                    <small class="text-primary mt-1 d-block">{{ nb_factures_total }} facture(s) émises</small>
+                </div></div>
+                <div class="col-md-3"><div class="card border-0 shadow-sm rounded-3 p-3 bg-white">
+                    <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">TVA Collectée</small>
+                    <h4 class="fw-bolder text-primary mt-2 mb-0">{{ total_tva|floatformat:"0g" }} Ar</h4>
+                    <small class="text-muted mt-1 d-block">À déclarer aux impôts</small>
+                </div></div>
+                <div class="col-md-3"><div class="card border-0 shadow-sm rounded-3 p-3 bg-white">
+                    <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Total Encaissé</small>
+                    <h4 class="fw-bolder text-success mt-2 mb-0">{{ total_encaisse|floatformat:"0g" }} Ar</h4>
+                    <small class="text-success mt-1 d-block">Taux de recouvrement : {{ taux_recouvrement }} %</small>
+                </div></div>
+                <div class="col-md-3"><div class="card border-0 shadow-sm rounded-3 p-3 bg-white">
+                    <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Reste à Recouvrer</small>
+                    <h4 class="fw-bolder text-danger mt-2 mb-0">{{ total_reste_a_payer|floatformat:"0g" }} Ar</h4>
+                    <small class="text-danger mt-1 d-block">{{ nb_factures_en_attente }} facture(s) en attente{% if nb_factures_en_retard %} · {{ nb_factures_en_retard }} en retard{% endif %}</small>
+                </div></div>
+            </div>
+            <div class="row g-3 mb-4">
+                <div class="col-md-3"><div class="card border-0 shadow-sm rounded-3 p-3 bg-white">
+                    <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Total TTC facturé</small>
+                    <h4 class="fw-bolder text-dark mt-2 mb-0">{{ total_ttc|floatformat:"0g" }} Ar</h4>
+                    <small class="text-muted mt-1 d-block">{{ nb_factures_payees }} facture(s) soldée(s)</small>
+                </div></div>
+                <div class="col-md-3"><div class="card border-0 shadow-sm rounded-3 p-3 bg-white">
+                    <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Bénéfice (HT − coût de revient)</small>
+                    <h4 class="fw-bolder text-success mt-2 mb-0">{{ benefice|floatformat:"0g" }} Ar</h4>
+                    <small class="text-muted mt-1 d-block">Sur la période filtrée</small>
+                </div></div>
+                <div class="col-md-3"><div class="card border-0 shadow-sm rounded-3 p-3 bg-white">
+                    <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">CA du mois / de l'année</small>
+                    <h6 class="fw-bolder text-dark mt-2 mb-0">{{ tableau_bord.ca_mois|floatformat:"0g" }} / {{ tableau_bord.ca_annuel|floatformat:"0g" }} Ar</h6>
+                    <small class="text-muted mt-1 d-block">Encaissé ce mois : {{ tableau_bord.encaisse_mois|floatformat:"0g" }} Ar</small>
+                </div></div>
+                <div class="col-md-3"><div class="card border-0 shadow-sm rounded-3 p-3 bg-white">
+                    <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Marge de l'année</small>
+                    <h6 class="fw-bolder text-dark mt-2 mb-0">{{ tableau_bord.benefices.marge_pct }} %</h6>
+                    <small class="text-muted mt-1 d-block">Bénéfice : {{ tableau_bord.benefices.benefice|floatformat:"0g" }} Ar</small>
+                </div></div>
+            </div>
+
+            <!-- Analyse -->
+            <div class="row g-3 mb-4">
+                <div class="col-lg-6"><div class="card border-0 shadow-sm rounded-3 h-100 bg-white"><div class="card-body p-4">
+                    <h6 class="card-title-sm mb-3">Chiffre d'affaires HT par mois ({% now "Y" %})</h6>
+                    <div class="d-flex align-items-end gap-2" style="height: 160px;">
+                        {% for m in tableau_bord.evolution_mensuelle %}
+                        <div class="flex-fill text-center d-flex flex-column justify-content-end h-100" title="{{ m.libelle }} : {{ m.ca|floatformat:'0g' }} Ar ({{ m.nb }} facture{{ m.nb|pluralize }})">
+                            <div class="bg-primary rounded-top barre" data-pct="{{ m.pct }}"></div>
+                            <small class="text-muted" style="font-size: 0.65rem;">{{ m.libelle }}</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div></div></div>
+                <div class="col-lg-3"><div class="card border-0 shadow-sm rounded-3 h-100 bg-white"><div class="card-body p-4">
+                    <h6 class="card-title-sm mb-3">Meilleures ventes (CA)</h6>
+                    {% for p in tableau_bord.meilleures_ventes %}<div class="d-flex justify-content-between small py-1 border-bottom"><span class="text-truncate me-2">{{ p.nom }}</span><span class="fw-semibold text-nowrap">{{ p.ca|floatformat:"0g" }}</span></div>{% empty %}<p class="text-muted small mb-0">Pas encore de ventes.</p>{% endfor %}
+                    <h6 class="card-title-sm mt-4 mb-3">Plus vendus (quantité)</h6>
+                    {% for p in tableau_bord.produits_plus_vendus %}<div class="d-flex justify-content-between small py-1 border-bottom"><span class="text-truncate me-2">{{ p.nom }}</span><span class="fw-semibold">{{ p.quantite|floatformat:"-2" }}</span></div>{% empty %}<p class="text-muted small mb-0">Pas encore de ventes.</p>{% endfor %}
+                </div></div></div>
+                <div class="col-lg-3"><div class="card border-0 shadow-sm rounded-3 h-100 bg-white"><div class="card-body p-4">
+                    <h6 class="card-title-sm mb-3">Clients fidèles</h6>
+                    {% for c in tableau_bord.clients_fideles %}<div class="d-flex justify-content-between small py-1 border-bottom"><span class="text-truncate me-2">{{ c.client__nom_ou_raison_sociale }}</span><span class="text-nowrap">{{ c.nb_achats }} achat{{ c.nb_achats|pluralize }} · {{ c.ca|floatformat:"0g" }}</span></div>{% empty %}<p class="text-muted small mb-0">Pas encore de clients actifs.</p>{% endfor %}
+                </div></div></div>
+            </div>
+
+            <!-- Détail -->
+            <div class="card border-0 shadow-sm rounded-3 bg-white"><div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="card-title-sm mb-0">Détail des factures</h6>
+                    <span class="badge bg-primary-subtle text-primary rounded-pill">{{ factures|length }} ligne{{ factures|length|pluralize }}</span>
+                </div>
+                <div class="table-responsive"><table class="table align-middle mb-0">
+                    <thead class="table-light text-secondary thead-sm"><tr><th>N° Facture</th><th>Date</th><th>Client</th><th class="text-end">Total HT</th><th class="text-end">TVA</th><th class="text-end">Total TTC</th><th class="text-end">Encaissé</th><th class="text-end">Reste</th><th>Statut</th></tr></thead>
+                    <tbody>
+                    {% for facture in factures %}
+                    <tr>
+                        <td><a href="{% url 'facture_detail' facture.pk %}" class="font-monospace text-primary fw-bold text-decoration-none">{{ facture.numero_affichage }}</a></td>
+                        <td>{{ facture.date_emission|date:"d/m/Y" }}</td>
+                        <td class="fw-semibold">{{ facture.client.nom_ou_raison_sociale }}</td>
+                        <td class="text-end">{{ facture.total_ht|floatformat:"0g" }} Ar</td>
+                        <td class="text-end">{{ facture.total_tva|floatformat:"0g" }} Ar</td>
+                        <td class="text-end fw-bold">{{ facture.total_ttc|floatformat:"0g" }} Ar</td>
+                        <td class="text-end text-success">{{ facture.total_paye|floatformat:"0g" }} Ar</td>
+                        <td class="text-end text-danger">{{ facture.reste_a_payer|floatformat:"0g" }} Ar</td>
+                        <td>
+                            {% with s=facture.statut_effectif %}
+                            {% if s == 'PAYEE' %}<span class="badge bg-success-subtle text-success rounded-pill">Payée</span>
+                            {% elif s == 'PARTIELLE' %}<span class="badge bg-info-subtle text-info rounded-pill">Partielle</span>
+                            {% elif s == 'EN_RETARD' %}<span class="badge bg-danger-subtle text-danger rounded-pill">En retard</span>
+                            {% elif s == 'BROUILLON' %}<span class="badge bg-secondary-subtle text-secondary rounded-pill">Brouillon</span>
+                            {% elif s == 'ANNULEE' %}<span class="badge bg-dark-subtle text-dark rounded-pill">Annulée</span>
+                            {% else %}<span class="badge bg-warning-subtle text-warning rounded-pill">En attente</span>{% endif %}
+                            {% endwith %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="9" class="text-center text-muted py-5"><i class="bi bi-bar-chart-line display-6 d-block mb-2 text-secondary opacity-50"></i><span>Aucune donnée pour cette période.</span></td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table></div>
+            </div></div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.querySelectorAll('.barre[data-pct]').forEach(function (b) { b.style.height = b.dataset.pct + '%'; });
+    </script>
+</body>
+</html>

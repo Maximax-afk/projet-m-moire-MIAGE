@@ -1,0 +1,412 @@
+
+{% extends "index.html" %}
+
+{% block content %}
+<style>
+    .ia-page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 24px;
+        color: #1e293b;
+    }
+
+    .ia-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 26px;
+    }
+
+    .ia-header h1 {
+        margin: 0 0 8px;
+        font-size: 28px;
+        font-weight: 750;
+    }
+
+    .ia-subtitle {
+        color: #64748b;
+        margin: 0;
+    }
+
+    .ia-tag {
+        display: inline-block;
+        padding: 7px 12px;
+        border-radius: 20px;
+        background: #eff6ff;
+        color: #1d4ed8;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .ia-stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .ia-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, .03);
+    }
+
+    .ia-stat-label {
+        color: #64748b;
+        font-size: 14px;
+    }
+
+    .ia-stat-value {
+        display: block;
+        margin-top: 10px;
+        font-size: 28px;
+        font-weight: 750;
+    }
+
+    .ia-section-title {
+        font-size: 19px;
+        font-weight: 700;
+        margin: 0 0 16px;
+    }
+
+    .ia-table-wrap {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .ia-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 760px;
+    }
+
+    .ia-table th,
+    .ia-table td {
+        padding: 14px 12px;
+        text-align: left;
+        border-bottom: 1px solid #e2e8f0;
+        vertical-align: middle;
+    }
+
+    .ia-table th {
+        color: #64748b;
+        background: #f8fafc;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+    }
+
+    .ia-table td {
+        font-size: 14px;
+    }
+
+    .ia-status {
+        display: inline-block;
+        padding: 5px 9px;
+        border-radius: 20px;
+        background: #f1f5f9;
+        color: #475569;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .ia-status.valid {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .ia-status.corrected {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .ia-status.pending {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+
+    .ia-empty {
+        padding: 36px 16px;
+        text-align: center;
+        color: #64748b;
+    }
+
+    .ia-empty strong {
+        display: block;
+        margin-bottom: 8px;
+        color: #334155;
+        font-size: 16px;
+    }
+
+    .ia-muted {
+        color: #64748b;
+        font-size: 12px;
+        margin-top: 5px;
+    }
+
+    .ia-button {
+        display: inline-block;
+        border: 0;
+        border-radius: 8px;
+        padding: 9px 13px;
+        background: #2563eb;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .ia-button:hover {
+        background: #1d4ed8;
+    }
+
+    .ia-button:disabled {
+        opacity: .5;
+        cursor: not-allowed;
+    }
+
+    .ia-form {
+        display: grid;
+        gap: 9px;
+        min-width: 220px;
+    }
+
+    .ia-form select,
+    .ia-form input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 9px;
+        border: 1px solid #cbd5e1;
+        border-radius: 7px;
+        background: white;
+    }
+
+    .ia-form label {
+        font-size: 12px;
+        color: #64748b;
+    }
+
+    .ia-message {
+        display: none;
+        margin-bottom: 16px;
+        padding: 12px;
+        border-radius: 8px;
+        background: #eff6ff;
+        color: #1d4ed8;
+    }
+
+    @media (max-width: 700px) {
+        .ia-page {
+            padding: 14px;
+        }
+
+        .ia-stats {
+            grid-template-columns: 1fr;
+        }
+
+        .ia-header h1 {
+            font-size: 23px;
+        }
+    }
+</style>
+
+<div class="ia-page">
+
+    <header class="ia-header">
+        <div>
+            <h1>Classification intelligente des factures</h1>
+            <p class="ia-subtitle">
+                Analyse documentaire, catégorisation comptable et validation humaine.
+            </p>
+        </div>
+        <span class="ia-tag">IA documentaire</span>
+    </header>
+
+    <div class="ia-stats">
+        <div class="ia-card">
+            <span class="ia-stat-label">Documents analysés</span>
+            <strong class="ia-stat-value">{{ classifications|length }}</strong>
+        </div>
+
+        <div class="ia-card">
+            <span class="ia-stat-label">En attente de validation</span>
+            <strong class="ia-stat-value" id="stat-attente">
+                {{ classifications|length }}
+            </strong>
+        </div>
+
+        <div class="ia-card">
+            <span class="ia-stat-label">Classifications corrigées</span>
+            <strong class="ia-stat-value" id="stat-corrigees">—</strong>
+        </div>
+    </div>
+
+    <div id="ia-message" class="ia-message" role="status"></div>
+
+    <section class="ia-card">
+        <h2 class="ia-section-title">Historique des classifications</h2>
+
+        {% if classifications %}
+        <div class="ia-table-wrap">
+            <table class="ia-table">
+                <thead>
+                    <tr>
+                        <th>Document</th>
+                        <th>Type prédit</th>
+                        <th>Catégorie comptable</th>
+                        <th>Date d'analyse</th>
+                        <th>Statut</th>
+                        <th>Validation / correction</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for c in classifications %}
+                    <tr data-statut="{{ c.statut }}">
+                        <td>
+                            {% if c.facture %}
+                                Facture {{ c.facture.numero|default:c.facture.pk }}
+                            {% elif c.nom_fichier %}
+                                {{ c.nom_fichier }}
+                            {% else %}
+                                Document #{{ c.pk }}
+                            {% endif %}
+
+                            {% if c.justification %}
+                            <div class="ia-muted">
+                                {{ c.justification|truncatechars:100 }}
+                            </div>
+                            {% endif %}
+                        </td>
+
+                        <td>{{ c.get_type_predit_display }}</td>
+
+                        <td>
+                            {{ c.categorie_comptable_predite|default:"Non définie" }}
+                        </td>
+
+                        <td>
+                            {{ c.date_analyse|date:"d/m/Y H:i" }}
+                        </td>
+
+                        <td>
+                            <span class="ia-status
+                                {% if c.statut == 'VALIDEE' %}valid
+                                {% elif c.statut == 'CORRIGEE' %}corrected
+                                {% else %}pending{% endif %}">
+                                {{ c.get_statut_display }}
+                            </span>
+                        </td>
+
+                        <td>
+                            {% if c.statut == "EN_ATTENTE" %}
+                            <form class="ia-form"
+                                  method="post"
+                                  action="{% url 'ia_classification_valider' c.pk %}">
+                                {% csrf_token %}
+
+                                <label for="type-{{ c.pk }}">Type confirmé</label>
+                                <select id="type-{{ c.pk }}" name="type_valide" required>
+                                    {% for code, libelle in types_document %}
+                                    <option value="{{ code }}"
+                                        {% if c.type_predit == code %}selected{% endif %}>
+                                        {{ libelle }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+
+                                <label for="categorie-{{ c.pk }}">Catégorie comptable</label>
+                                <input
+                                    id="categorie-{{ c.pk }}"
+                                    type="text"
+                                    name="categorie_comptable_validee"
+                                    value="{{ c.categorie_comptable_predite }}"
+                                    placeholder="Ex. : Achats de marchandises"
+                                    required
+                                >
+
+                                <button class="ia-button" type="submit">
+                                    Valider
+                                </button>
+                            </form>
+                            {% else %}
+                                <div>
+                                    <strong>{{ c.get_type_valide_display|default:c.type_valide|default:c.get_type_predit_display }}</strong>
+                                    <div class="ia-muted">
+                                        {{ c.categorie_comptable_validee|default:c.categorie_comptable_predite }}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% else %}
+        <div class="ia-empty">
+            <strong>Aucune classification pour le moment</strong>
+            Les résultats de l'analyse des documents apparaîtront ici.
+            <p class="ia-muted">
+                Le moteur de classification doit être connecté pour lancer une analyse.
+            </p>
+        </div>
+        {% endif %}
+    </section>
+
+</div>
+
+<script>
+(function () {
+    const rows = Array.from(document.querySelectorAll("tbody tr[data-statut]"));
+    const attente = rows.filter(
+        row => row.dataset.statut === "EN_ATTENTE"
+    ).length;
+    const corrigees = rows.filter(
+        row => row.dataset.statut === "CORRIGEE"
+    ).length;
+
+    document.getElementById("stat-attente").textContent = attente;
+    document.getElementById("stat-corrigees").textContent = corrigees;
+
+    document.querySelectorAll(".ia-form").forEach(form => {
+        form.addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            const button = form.querySelector("button[type='submit']");
+            const originalText = button.textContent;
+            button.disabled = true;
+            button.textContent = "Enregistrement…";
+
+            try {
+                const response = await fetch(form.action, {
+                    method: "POST",
+                    body: new FormData(form),
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest"
+                    }
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.erreur || "Erreur lors de l'enregistrement.");
+                }
+
+                window.location.reload();
+            } catch (error) {
+                const message = document.getElementById("ia-message");
+                message.textContent = error.message;
+                message.style.display = "block";
+                button.disabled = false;
+                button.textContent = originalText;
+            }
+        });
+    });
+})();
+</script>
+{% endblock %}

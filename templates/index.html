@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de Bord - FactuApp</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        body { min-height: 100vh; background-color: #f8f9fa; }
+        .sidebar { width: 280px; min-height: 100vh; background-color: #0f172a; }
+        .nav-link { color: #94a3b8; font-size: 0.9rem; border-radius: 8px; padding: 8px 12px; margin-bottom: 3px; }
+        .nav-link:hover { color: #ffffff; background-color: #1e293b; }
+        .nav-link.active { color: #ffffff; background-color: #4f46e5; }
+        .section-title { font-size: 0.7rem; text-transform: uppercase; font-weight: 700; color: #64748b; padding: 10px 12px 4px 12px; }
+    </style>
+</head>
+<body class="d-flex">
+    <aside class="sidebar text-white d-flex flex-column flex-shrink-0 shadow">
+        <div class="d-flex align-items-center gap-3 p-3 border-bottom border-secondary border-opacity-25" style="height: 70px;">
+            <div class="bg-primary text-white rounded-3 fw-bold d-flex align-items-center justify-content-center fs-5 shadow-sm" style="width: 40px; height: 40px;">F</div>
+            <div>
+                <h6 class="mb-0 fw-bold text-uppercase text-white">Factura<span class="text-primary">Pro</span></h6>
+                <small class="text-secondary" style="font-size: 0.65rem;">GESTION COMMERCIALE</small>
+            </div>
+        </div>
+        <nav class="p-3 flex-grow-1 overflow-auto">
+            <div class="section-title">Pilotage</div>
+            <a href="/" class="nav-link active d-flex align-items-center gap-2"><i class="bi bi-grid-1x2-fill"></i><span>Tableau de bord</span></a>
+            <a href="/facture.html" class="nav-link d-flex align-items-center gap-2"><i class="bi bi-receipt text-info"></i><span>Factures</span></a>
+            <a href="/devis.html" class="nav-link d-flex align-items-center gap-2"><i class="bi bi-file-earmark-text text-primary"></i><span>Devis & Estimations</span></a>
+            <div class="section-title">Répertoire</div>
+            <a href="/clients.html" class="nav-link d-flex align-items-center gap-2"><i class="bi bi-people text-warning"></i><span>Clients</span></a>
+            <a href="/produits.html" class="nav-link d-flex align-items-center gap-2"><i class="bi bi-box-seam text-success"></i><span>Produits & Services</span></a>
+            <a href="{% url 'ia_classification' %}" class="nav-link d-flex align-items-center gap-2"><i class="bi bi-robot text-info"></i> <span>Classification IA</span></a>
+            <a href="/paiements.html" class="nav-link d-flex align-items-center gap-2"><i class="bi bi-credit-card text-success"></i><span>Paiements</span></a>
+            <a href="/recherche.html" class="nav-link d-flex align-items-center gap-2"><i class="bi bi-search text-danger"></i><span>Recherche de factures</span></a>
+            <a href="/rapports.html" class="nav-link d-flex align-items-center gap-2"><i class="bi bi-bar-chart-line text-warning"></i><span>Rapports & Stats</span></a>
+            <a href="/utilisateurs.html" class="nav-link d-flex align-items-center gap-2"><i class="bi bi-gear text-secondary"></i><span>Gestion des utilisateurs</span></a>
+        </nav>
+    </aside>
+
+    <main class="flex-grow-1 d-flex flex-column vh-100 overflow-auto">
+        <header class="bg-white border-bottom px-4 d-flex align-items-center justify-content-between" style="height: 70px;">
+            <div>
+                <h5 class="mb-0 fw-bold text-dark">Tableau de Bord</h5>
+                <small class="text-muted">Aperçu général des activités en Ariary (Ar)</small>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="/facture.html" class="btn btn-primary btn-sm px-3 rounded-pill fw-semibold">
+                    <i class="bi bi-plus-circle me-1"></i> Nouvelle Facture
+                </a>
+            </div>
+        </header>
+
+        <div class="p-4">
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm rounded-3 p-3 bg-white">
+                        <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Chiffre d'Affaires HT</small>
+                        <h4 class="fw-bolder text-dark mt-2 mb-0">{{ total_ca_ht|floatformat:0 }} Ar</h4>
+                        <small class="text-primary mt-1 d-block"><i class="bi bi-graph-up"></i> Factures émises</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm rounded-3 p-3 bg-white">
+                        <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Total Encaissé</small>
+                        <h4 class="fw-bolder text-success mt-2 mb-0">{{ total_encaisse|floatformat:0 }} Ar</h4>
+                        <small class="text-success mt-1 d-block"><i class="bi bi-check-circle"></i> Règlements perçus</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm rounded-3 p-3 bg-white">
+                        <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Factures au total</small>
+                        <h4 class="fw-bolder text-primary mt-2 mb-0">{{ nb_factures }}</h4>
+                        <small class="text-muted mt-1 d-block">Dans la base de données</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm rounded-3 p-3 bg-white">
+                        <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Clients Enregistrés</small>
+                        <h4 class="fw-bolder text-warning mt-2 mb-0">{{ nb_clients }}</h4>
+                        <small class="text-muted mt-1 d-block">Répertoire actif</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dernières factures générées -->
+            <div class="card border-0 shadow-sm rounded-3">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="text-uppercase fw-bold text-muted mb-0" style="font-size: 0.75rem;">Dernières Factures Émises</h6>
+                        <a href="/recherche.html" class="text-decoration-none small fw-semibold">Voir tout <i class="bi bi-arrow-right"></i></a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead class="table-light text-secondary text-uppercase" style="font-size: 0.75rem;">
+                                <tr>
+                                    <th>N° Facture</th>
+                                    <th>Date</th>
+                                    <th>Client</th>
+                                    <th class="text-end">Total TTC</th>
+                                    <th>Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for facture in dernieres_factures %}
+                                <tr>
+                                    <td class="font-monospace text-primary fw-bold">{{ facture.numero }}</td>
+                                    <td>{{ facture.date_emission|date:"d/m/Y" }}</td>
+                                    <td class="fw-semibold">{{ facture.client.nom_ou_raison_sociale }}</td>
+                                    <td class="text-end fw-bold">{{ facture.total_ttc|floatformat:0 }} Ar</td>
+                                    <td>
+                                        {% if facture.statut == 'PAYEE' %}
+                                            <span class="badge bg-success-subtle text-success rounded-pill">Payée</span>
+                                        {% else %}
+                                            <span class="badge bg-warning-subtle text-warning rounded-pill">En attente</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-5">
+                                        <i class="bi bi-receipt display-6 d-block mb-2 text-secondary opacity-50"></i>
+                                        <span>Aucune facture dans la base de données. Créez votre première facture !</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

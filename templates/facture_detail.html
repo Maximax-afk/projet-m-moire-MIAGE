@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Détail de la facture</title>
+</head>
+<body>
+    <h1>Détail de la facture</h1>
+
+    <p>Numéro : {{ facture.numero_affichage }}</p>
+    <p>Date : {{ facture.date_creation }}</p>
+
+    <a href="{% url 'facture' %}">Retour aux factures</a>
+</body>
+</html>

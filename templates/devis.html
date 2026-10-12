@@ -1,0 +1,396 @@
+{% load l10n %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Devis & Estimations - FactuApp</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        body { min-height: 100vh; background-color: #f8f9fa; }
+        .sidebar { width: 280px; min-height: 100vh; background-color: #0f172a; }
+        .nav-link { color: #94a3b8; font-size: 0.9rem; border-radius: 8px; padding: 8px 12px; margin-bottom: 3px; }
+        .nav-link:hover { color: #ffffff; background-color: #1e293b; }
+        .nav-link.active { color: #ffffff; background-color: #4f46e5; }
+        .section-title { font-size: 0.7rem; text-transform: uppercase; font-weight: 700; color: #64748b; padding: 10px 12px 4px 12px; }
+        .card-title-sm { font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: #6c757d; }
+        .thead-sm { font-size: 0.75rem; text-transform: uppercase; }
+    </style>
+</head>
+<body class="d-flex">
+    <aside class="sidebar text-white d-flex flex-column flex-shrink-0 shadow">
+        <div class="d-flex align-items-center gap-3 p-3 border-bottom border-secondary border-opacity-25" style="height: 70px;">
+            <div class="bg-primary text-white rounded-3 fw-bold d-flex align-items-center justify-content-center fs-5 shadow-sm" style="width: 40px; height: 40px;">F</div>
+            <div>
+                <h6 class="mb-0 fw-bold text-uppercase text-white">Factura<span class="text-primary">Pro</span></h6>
+                <small class="text-secondary" style="font-size: 0.65rem;">GESTION COMMERCIALE</small>
+            </div>
+        </div>
+        <nav class="p-3 flex-grow-1 overflow-auto">
+            <div class="section-title">Pilotage</div>
+            <a href="/" class="nav-link d-flex align-items-center gap-2"><i class="bi bi-grid-1x2-fill"></i><span>Tableau de bord</span></a>
+            <a href="/facture.html" class="nav-link d-flex align-items-center gap-2"><i class="bi bi-receipt text-info"></i><span>Factures</span></a>
+            <a href="/devis.html" class="nav-link active d-flex align-items-center gap-2"><i class="bi bi-file-earmark-text text-primary"></i><span>Devis & Estimations</span></a>
+            <a href="/clients.html" class="nav-link d-flex align-items-center gap-2"><i class="bi bi-people text-warning"></i><span>Clients</span></a>
+            <a href="/produits.html" class="nav-link d-flex align-items-center gap-2"><i class="bi bi-box-seam text-success"></i><span>Produits & Services</span></a>
+            <a href="/paiements.html" class="nav-link d-flex align-items-center gap-2"><i class="bi bi-credit-card text-success"></i><span>Paiements</span></a>
+            <a href="/recherche.html" class="nav-link d-flex align-items-center gap-2"><i class="bi bi-search text-danger"></i><span>Recherche de factures</span></a>
+            <a href="/rapports.html" class="nav-link d-flex align-items-center gap-2"><i class="bi bi-bar-chart-line text-warning"></i><span>Rapports & Stats</span></a>
+            <a href="/utilisateurs.html" class="nav-link d-flex align-items-center gap-2"><i class="bi bi-gear text-secondary"></i><span>Gestion des utilisateurs</span></a>
+        </nav>
+    </aside>
+
+    <main class="flex-grow-1 d-flex flex-column vh-100 overflow-auto">
+        <header class="bg-white border-bottom px-4 d-flex align-items-center justify-content-between flex-shrink-0" style="height: 70px;">
+            <div>
+                <h5 class="mb-0 fw-bold text-dark">{% if devis_edit %}Modifier le devis {{ devis_edit.numero }}{% else %}Devis & Estimations{% endif %}</h5>
+                <small class="text-muted">Créez, envoyez, suivez et convertissez vos devis en factures</small>
+            </div>
+            <div class="d-flex gap-2">
+                {% if devis_edit %}
+                    <a href="/devis.html" class="btn btn-outline-secondary btn-sm px-3 rounded-pill fw-semibold"><i class="bi bi-arrow-left me-1"></i> Retour à la liste</a>
+                {% elif acces.creer_devis %}
+                    <button class="btn btn-primary btn-sm px-3 rounded-pill fw-semibold" data-bs-toggle="collapse" data-bs-target="#carte-nouveau-devis"><i class="bi bi-plus-circle me-1"></i> Nouveau devis</button>
+                {% endif %}
+            </div>
+        </header>
+
+        <div class="p-4">
+            {% for m in messages %}
+            <div class="alert alert-{% if m.tags == 'error' %}danger{% else %}{{ m.tags|default:'info' }}{% endif %} alert-dismissible fade show py-2" role="alert">{{ m }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+            {% endfor %}
+
+            {% if devis_edit or acces.creer_devis %}
+            <!-- ================= Formulaire (création / modification) ================= -->
+            <div class="{% if not devis_edit %}collapse{% endif %} {% if client_prefill %}show{% endif %}" id="carte-nouveau-devis">
+            <form method="post" action="{% if devis_edit %}{% url 'modifier_devis' devis_edit.pk %}{% else %}{% url 'devis' %}{% endif %}" class="mb-4">
+            {% csrf_token %}
+            <div class="row g-3">
+                <div class="col-lg-9">
+                    <div class="card border-0 shadow-sm rounded-3 mb-3 bg-white"><div class="card-body p-4">
+                        <h6 class="card-title-sm mb-3">{% if devis_edit %}Modification du devis{% else %}Nouveau devis{% endif %}</h6>
+                        <div class="row g-3">
+                            <div class="col-md-5"><label class="form-label small fw-semibold text-secondary">Client</label>
+                                <select name="client_id" id="client_id" class="form-select form-select-sm" required>
+                                    <option value="">— Choisir un client —</option>
+                                    {% for c in liste_clients %}<option value="{{ c.pk }}" {% if devis_edit.client_id == c.pk or client_prefill == c.pk|stringformat:"d" %}selected{% endif %}>{{ c.nom_ou_raison_sociale }} ({{ c.code_client }})</option>{% endfor %}
+                                </select></div>
+                            <div class="col-md-3"><label class="form-label small fw-semibold text-secondary">Date d'émission</label>
+                                <input type="date" name="date_emission" class="form-control form-control-sm" value="{% if devis_edit %}{{ devis_edit.date_emission|date:'Y-m-d' }}{% else %}{% now 'Y-m-d' %}{% endif %}"></div>
+                            <div class="col-md-2"><label class="form-label small fw-semibold text-secondary">Validité (jours)</label>
+                                <input type="number" min="1" name="validite_jours" class="form-control form-control-sm" value="{% if devis_edit %}{{ devis_edit.validite_jours }}{% else %}{{ params.validite_devis_defaut }}{% endif %}"></div>
+                            <div class="col-md-2"><label class="form-label small fw-semibold text-secondary">Acompte (%)</label>
+                                <input type="number" step="0.01" min="0" max="100" name="acompte" class="form-control form-control-sm" value="{% if devis_edit %}{{ devis_edit.acompte_pct|unlocalize }}{% else %}0{% endif %}"></div>
+                        </div>
+                    </div></div>
+
+                    <div class="card border-0 shadow-sm rounded-3 mb-3 bg-white"><div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="card-title-sm mb-0">Lignes du devis</h6>
+                            <button type="button" class="btn btn-outline-primary btn-sm rounded-pill" id="btn-ajouter"><i class="bi bi-plus-lg me-1"></i>Ajouter une ligne</button>
+                        </div>
+                        <div class="table-responsive"><table class="table align-middle mb-0">
+                            <thead class="table-light text-secondary thead-sm"><tr><th>Produit / description</th><th class="text-end">Qté</th><th class="text-end">PU HT (Ar)</th><th class="text-end">Remise %</th><th class="text-end">TVA %</th><th class="text-end">Total HT</th><th></th></tr></thead>
+                            <tbody id="lignes-corps"></tbody>
+                        </table></div>
+                        <p class="text-muted small mt-2 mb-0">Choisissez un produit pour préremplir prix, TVA et remise (modifiables). Une ligne libre sert aux prestations ponctuelles.</p>
+
+                        <template id="ligne-modele">
+                            <tr class="ligne">
+                                <td style="min-width: 240px;">
+                                    <select name="produit_id[]" class="form-select form-select-sm sel-produit mb-1">
+                                        <option value="">— Ligne libre —</option>
+                                        {% for p in liste_produits %}<option value="{{ p.pk }}" data-designation="{{ p.designation }}" data-prix="{{ p.prix_unitaire_ht|unlocalize }}" data-tva="{{ p.taux_tva|unlocalize }}" data-remise="{{ p.remise_par_defaut_pct|unlocalize }}" data-remisemax="{{ p.remise_max_pct|unlocalize }}" data-cout="{{ p.prix_achat_ht|unlocalize }}" data-stock="{{ p.stock|unlocalize }}" data-suitstock="{% if p.suit_stock %}1{% else %}0{% endif %}">{{ p.reference }} — {{ p.designation }}</option>{% endfor %}
+                                    </select>
+                                    <input type="text" name="description[]" class="form-control form-control-sm f-desc" placeholder="Description">
+                                    <small class="text-danger d-none f-alerte"></small>
+                                </td>
+                                <td style="width: 90px;"><input type="number" step="0.01" min="0" name="quantite[]" class="form-control form-control-sm f-qte text-end" value="1"></td>
+                                <td style="width: 135px;"><input type="number" step="0.01" min="0" name="prix_unitaire[]" class="form-control form-control-sm f-pu text-end" placeholder="0"></td>
+                                <td style="width: 85px;"><input type="number" step="0.01" min="0" max="100" name="remise[]" class="form-control form-control-sm f-remise text-end" value="0"></td>
+                                <td style="width: 85px;"><input type="number" step="0.01" min="0" max="100" name="tva[]" class="form-control form-control-sm f-tva text-end" value="{{ params.taux_tva_defaut|unlocalize }}"></td>
+                                <td class="text-end fw-semibold f-total" style="width: 120px;">0</td>
+                                <td style="width: 40px;"><button type="button" class="btn btn-sm btn-outline-danger btn-suppr" title="Supprimer la ligne"><i class="bi bi-trash"></i></button></td>
+                            </tr>
+                        </template>
+                        <div id="lignes-init" hidden>{% for l in lignes %}<span data-produit="{{ l.produit_id|default_if_none:'' }}" data-desc="{{ l.description }}" data-qte="{{ l.quantite|unlocalize }}" data-pu="{{ l.prix_unitaire_ht|unlocalize }}" data-remise="{{ l.remise_pct|unlocalize }}" data-tva="{{ l.taux_tva|unlocalize }}"></span>{% endfor %}</div>
+                    </div></div>
+
+                    <div class="card border-0 shadow-sm rounded-3 bg-white"><div class="card-body p-4"><div class="row g-3">
+                        <div class="col-md-6"><label class="form-label small fw-semibold text-secondary">Notes</label><textarea name="notes" id="notes" rows="3" class="form-control form-control-sm">{{ devis_edit.notes }}</textarea></div>
+                        <div class="col-md-6"><label class="form-label small fw-semibold text-secondary">Conditions</label><textarea name="conditions" rows="3" class="form-control form-control-sm">{% if devis_edit %}{{ devis_edit.conditions }}{% else %}{{ params.conditions_par_defaut }}{% endif %}</textarea></div>
+                    </div></div></div>
+                </div>
+
+                <div class="col-lg-3"><div class="position-sticky" style="top: 0;">
+                    <div class="card border-0 shadow-sm rounded-3 mb-3 bg-white"><div class="card-body p-4">
+                        <h6 class="card-title-sm mb-3">Totaux</h6>
+                        <div class="d-flex justify-content-between small mb-1"><span class="text-muted">Sous-total HT</span><span id="t-sous">0</span></div>
+                        <div class="d-flex justify-content-between align-items-center small mb-1"><span class="text-muted">Remise globale (%)</span>
+                            <input type="number" step="0.01" min="0" max="100" id="remise_globale" name="remise_globale" class="form-control form-control-sm text-end" style="width: 90px;" value="{% if devis_edit %}{{ devis_edit.remise_globale_pct|unlocalize }}{% else %}0{% endif %}"></div>
+                        <div class="d-flex justify-content-between small mb-1"><span class="text-muted">Remise</span><span id="t-remise">0</span></div>
+                        <div class="d-flex justify-content-between small mb-1"><span class="text-muted">Total HT</span><span id="t-ht" class="fw-semibold">0</span></div>
+                        <div class="d-flex justify-content-between small mb-2"><span class="text-muted">TVA</span><span id="t-tva">0</span></div>
+                        <div class="d-flex justify-content-between border-top pt-2"><span class="fw-bold">Total TTC</span><span class="fw-bolder fs-5 text-primary"><span id="t-ttc">0</span> Ar</span></div>
+                        <div class="small text-muted mt-2">Marge estimée : <span id="t-marge" class="fw-semibold">—</span></div>
+                    </div></div>
+
+                    {% if acces.ia and preferences.afficher_ia and params.ia_active %}
+                    <div class="card border-0 shadow-sm rounded-3 mb-3 bg-white" id="ia-panel" data-url="{% url 'ia_assistant' 'ACTION' %}"><div class="card-body p-4">
+                        <h6 class="card-title-sm mb-3"><i class="bi bi-stars text-warning me-1"></i>Assistant IA</h6>
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-outline-primary btn-sm" data-ia="remise"><i class="bi bi-percent me-1"></i>Suggérer une remise</button>
+                            <button type="button" class="btn btn-outline-primary btn-sm" data-ia="complementaires"><i class="bi bi-bag-plus me-1"></i>Produits complémentaires</button>
+                            <button type="button" class="btn btn-outline-primary btn-sm" data-ia="negociation"><i class="bi bi-chat-square-text me-1"></i>Stratégies de négociation</button>
+                            <button type="button" class="btn btn-outline-primary btn-sm" data-ia="argumentaire"><i class="bi bi-megaphone me-1"></i>Argumentaire commercial</button>
+                        </div>
+                        <div id="ia-resultat" class="small mt-3"></div>
+                    </div></div>
+                    {% endif %}
+
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary rounded-pill fw-semibold"><i class="bi bi-save me-1"></i>Enregistrer le devis</button>
+                        {% if devis_edit %}<a href="/devis.html" class="btn btn-outline-secondary rounded-pill">Annuler</a>{% endif %}
+                    </div>
+                </div></div>
+            </div>
+            </form>
+            </div>
+            {% endif %}
+
+            {% if not devis_edit %}
+            <!-- ================= Suivi des devis ================= -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-3"><div class="card border-0 shadow-sm rounded-3 p-3 bg-white"><small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Taux d'acceptation</small><h4 class="fw-bolder text-success mt-2 mb-0">{{ stats.taux_acceptation }} %</h4><small class="text-muted mt-1 d-block">{{ stats.par_statut.ACCEPTE|add:stats.par_statut.CONVERTI }} gagné(s) · {{ stats.par_statut.REFUSE }} refusé(s) · {{ stats.par_statut.EXPIRE }} expiré(s)</small></div></div>
+                <div class="col-md-3"><div class="card border-0 shadow-sm rounded-3 p-3 bg-white"><small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">En attente de réponse</small><h4 class="fw-bolder text-primary mt-2 mb-0">{{ stats.par_statut.ENVOYE }}</h4><small class="text-muted mt-1 d-block">{{ stats.valeur_en_cours|floatformat:"0g" }} Ar TTC</small></div></div>
+                <div class="col-md-3"><div class="card border-0 shadow-sm rounded-3 p-3 bg-white"><small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Acceptés</small><h4 class="fw-bolder text-dark mt-2 mb-0">{{ stats.valeur_acceptee|floatformat:"0g" }} Ar</h4><small class="text-muted mt-1 d-block">dont {{ stats.par_statut.ACCEPTE }} à convertir en facture</small></div></div>
+                <div class="col-md-3"><div class="card border-0 shadow-sm rounded-3 p-3 bg-white"><small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Brouillons</small><h4 class="fw-bolder text-secondary mt-2 mb-0">{{ stats.par_statut.BROUILLON }}</h4><small class="text-muted mt-1 d-block">Non envoyés</small></div></div>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-3 mb-3 bg-white"><div class="card-body p-3">
+                <form method="get" action="/devis.html" class="row g-2 align-items-end">
+                    <div class="col-md-4"><input type="text" name="q_mot_cle" value="{{ q_mot_cle }}" class="form-control form-control-sm" placeholder="N° de devis ou client…"></div>
+                    <div class="col-md-3"><select name="q_statut" class="form-select form-select-sm"><option value="Tous">Tous les statuts</option>{% for v,l in statuts_devis %}<option value="{{ v }}" {% if q_statut == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+                    <div class="col-md-2"><input type="date" name="date_debut" value="{{ request.GET.date_debut }}" class="form-control form-control-sm" title="Du"></div>
+                    <div class="col-md-2"><input type="date" name="date_fin" value="{{ request.GET.date_fin }}" class="form-control form-control-sm" title="Au"></div>
+                    <div class="col-md-1 d-flex gap-1"><button class="btn btn-primary btn-sm rounded-pill flex-fill"><i class="bi bi-search"></i></button><a href="/devis.html" class="btn btn-outline-secondary btn-sm rounded-pill" title="Réinitialiser"><i class="bi bi-arrow-counterclockwise"></i></a></div>
+                </form>
+            </div></div>
+
+            <div class="card border-0 shadow-sm rounded-3 bg-white"><div class="card-body p-4">
+                <div class="table-responsive"><table class="table align-middle mb-0">
+                    <thead class="table-light text-secondary thead-sm"><tr><th>N° Devis</th><th>Date</th><th>Client</th><th>Valable jusqu'au</th><th class="text-end">Total TTC</th><th>Statut</th><th class="text-end">Actions</th></tr></thead>
+                    <tbody>
+                    {% for d in liste_devis %}
+                    <tr>
+                        <td class="font-monospace text-primary fw-bold">{{ d.numero }}</td>
+                        <td>{{ d.date_emission|date:"d/m/Y" }}</td>
+                        <td class="fw-semibold">{{ d.client.nom_ou_raison_sociale }}</td>
+                        <td>{{ d.date_validite|date:"d/m/Y" }}{% if d.est_expire %} <span class="badge bg-warning-subtle text-warning rounded-pill">à expirer</span>{% endif %}</td>
+                        <td class="text-end fw-bold">{{ d.total_ttc|floatformat:"0g" }} Ar{% if d.acompte_pct %}<small class="text-muted d-block fw-normal">Acompte {{ d.montant_acompte|floatformat:"0g" }} Ar</small>{% endif %}</td>
+                        <td>
+                            {% if d.statut == 'ACCEPTE' %}<span class="badge bg-success-subtle text-success rounded-pill">Accepté</span>
+                            {% elif d.statut == 'ENVOYE' %}<span class="badge bg-primary-subtle text-primary rounded-pill">Envoyé</span>
+                            {% elif d.statut == 'REFUSE' %}<span class="badge bg-danger-subtle text-danger rounded-pill">Refusé</span>
+                            {% elif d.statut == 'EXPIRE' %}<span class="badge bg-warning-subtle text-warning rounded-pill">Expiré</span>
+                            {% elif d.statut == 'CONVERTI' %}<span class="badge bg-info-subtle text-info rounded-pill">Converti</span>
+                            {% else %}<span class="badge bg-secondary-subtle text-secondary rounded-pill">Brouillon</span>{% endif %}
+                            {% if d.motif_refus %}<small class="text-muted d-block">{{ d.motif_refus }}</small>{% endif %}
+                        </td>
+                        <td class="text-end text-nowrap">
+                            <a href="{% url 'devis_pdf' d.pk %}" target="_blank" class="btn btn-sm btn-outline-secondary" title="PDF"><i class="bi bi-file-earmark-pdf"></i></a>
+                            {% if d.statut == 'ACCEPTE' and acces.creer_facture %}
+                            <form method="post" action="{% url 'devis_action' d.pk 'convertir' %}" class="d-inline" onsubmit="return confirm('Créer une facture brouillon à partir de ce devis ?');">{% csrf_token %}<button class="btn btn-sm btn-success" title="Convertir en facture"><i class="bi bi-arrow-right-circle me-1"></i>Facturer</button></form>
+                            {% endif %}
+                            {% if acces.creer_devis %}
+                            <div class="dropdown d-inline"><button class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" data-bs-boundary="viewport">Actions</button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                {% if d.statut == 'BROUILLON' %}
+                                    <li><a class="dropdown-item" href="{% url 'modifier_devis' d.pk %}"><i class="bi bi-pencil me-2"></i>Modifier</a></li>
+                                    <li><form method="post" action="{% url 'devis_action' d.pk 'envoyer' %}">{% csrf_token %}<button class="dropdown-item"><i class="bi bi-send me-2"></i>Marquer comme envoyé</button></form></li>
+                                {% endif %}
+                                {% if d.statut == 'ENVOYE' %}
+                                    <li><form method="post" action="{% url 'devis_action' d.pk 'accepter' %}">{% csrf_token %}<button class="dropdown-item text-success"><i class="bi bi-check-circle me-2"></i>Accepté par le client</button></form></li>
+                                    <li><button class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#modalRefus" data-url="{% url 'devis_action' d.pk 'refuser' %}" data-title="{{ d.numero }}"><i class="bi bi-x-circle me-2"></i>Refusé par le client</button></li>
+                                {% endif %}
+                                {% if d.statut == 'ENVOYE' or d.statut == 'REFUSE' or d.statut == 'EXPIRE' %}<li><form method="post" action="{% url 'devis_action' d.pk 'brouillon' %}">{% csrf_token %}<button class="dropdown-item"><i class="bi bi-arrow-counterclockwise me-2"></i>Repasser en brouillon</button></form></li>{% endif %}
+                                {% if d.statut != 'CONVERTI' %}<li><button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#modalEmailDevis" data-url="{% url 'devis_action' d.pk 'email' %}" data-title="{{ d.numero }}" data-f-destinataire="{{ d.client.email|default:'' }}"><i class="bi bi-envelope me-2"></i>Envoyer par e-mail</button></li>{% endif %}
+                                <li><a class="dropdown-item" href="{% url 'devis_pdf' d.pk %}?imprimer=1" target="_blank"><i class="bi bi-printer me-2"></i>Imprimer</a></li>
+                                <li><a class="dropdown-item" target="_blank" href="https://wa.me/?text={{ d.url_partage|urlencode }}"><i class="bi bi-whatsapp text-success me-2"></i>Partager (WhatsApp)</a></li>
+                                <li><form method="post" action="{% url 'devis_action' d.pk 'dupliquer' %}">{% csrf_token %}<button class="dropdown-item"><i class="bi bi-copy me-2"></i>Dupliquer</button></form></li>
+                                {% if d.statut == 'BROUILLON' or d.statut == 'REFUSE' or d.statut == 'EXPIRE' %}<li><hr class="dropdown-divider"></li>
+                                <li><form method="post" action="{% url 'devis_action' d.pk 'supprimer' %}" onsubmit="return confirm('Supprimer ce devis ?');">{% csrf_token %}<button class="dropdown-item text-danger"><i class="bi bi-trash me-2"></i>Supprimer</button></form></li>{% endif %}
+                            </ul></div>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="text-center text-muted py-5"><i class="bi bi-file-earmark-text display-6 d-block mb-2 text-secondary opacity-50"></i><span>Aucun devis ne correspond. Créez votre premier devis !</span></td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table></div>
+            </div></div>
+
+            <!-- Modale : refus -->
+            <div class="modal fade" id="modalRefus" tabindex="-1"><div class="modal-dialog"><form class="modal-content" method="post" data-dynamic>{% csrf_token %}
+                <div class="modal-header"><h6 class="modal-title">Devis <span data-modal-title></span> refusé</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body"><label class="form-label small fw-semibold">Motif du refus (facultatif)</label><input type="text" name="motif" class="form-control" placeholder="Prix trop élevé, délai, concurrent…"></div>
+                <div class="modal-footer"><button class="btn btn-danger rounded-pill fw-semibold">Enregistrer le refus</button></div>
+            </form></div></div>
+
+            <!-- Modale : e-mail -->
+            <div class="modal fade" id="modalEmailDevis" tabindex="-1"><div class="modal-dialog"><form class="modal-content" method="post" data-dynamic>{% csrf_token %}
+                <div class="modal-header"><h6 class="modal-title">Envoyer le devis <span data-modal-title></span> (PDF joint)</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body row g-3">
+                    <div class="col-12"><label class="form-label small fw-semibold">Destinataire</label><input type="email" name="destinataire" class="form-control" required></div>
+                    <div class="col-12"><label class="form-label small fw-semibold">Objet (facultatif)</label><input type="text" name="sujet" class="form-control"></div>
+                    <div class="col-12"><label class="form-label small fw-semibold">Message (facultatif)</label><textarea name="message" rows="4" class="form-control" placeholder="Laissez vide pour utiliser le message standard"></textarea></div>
+                    <div class="col-12 small text-muted">Un devis en brouillon passe automatiquement à « Envoyé ».</div>
+                </div>
+                <div class="modal-footer"><button class="btn btn-primary rounded-pill fw-semibold"><i class="bi bi-send me-1"></i>Envoyer</button></div>
+            </form></div></div>
+            {% endif %}
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    // Modales : le bouton porte data-url (action du formulaire), data-title et data-f-<champ> (valeur à préremplir)
+    document.addEventListener('show.bs.modal', function (e) {
+        const b = e.relatedTarget, m = e.target; if (!b) return;
+        const f = m.querySelector('form[data-dynamic]'); if (!f) return;
+        if (b.dataset.url) f.action = b.dataset.url;
+        const t = m.querySelector('[data-modal-title]'); if (t && b.dataset.title) t.textContent = b.dataset.title;
+        Object.keys(b.dataset).forEach(function (k) {
+            if (k.length < 2 || k[0] !== 'f' || k[1] !== k[1].toUpperCase()) return;
+            const champ = f.elements[k[1].toLowerCase() + k.slice(2)]; if (champ) champ.value = b.dataset[k];
+        });
+    });
+    </script>
+    {% if devis_edit or acces.creer_devis %}
+    <script>
+    (function () {
+        const $ = s => document.querySelector(s);
+        const corps = $('#lignes-corps'), modele = $('#ligne-modele');
+        const num = v => parseFloat(String(v).replace(',', '.')) || 0;
+        const fmt = n => new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(n || 0);
+        const option = tr => { const o = tr.querySelector('.sel-produit').selectedOptions[0]; return o && o.value ? o : null; };
+
+        function surProduit(tr, forcer) {
+            const o = option(tr); if (!o) return;
+            const d = o.dataset, desc = tr.querySelector('.f-desc');
+            if (forcer || !desc.value) desc.value = d.designation;
+            tr.querySelector('.f-pu').value = d.prix; tr.querySelector('.f-tva').value = d.tva; tr.querySelector('.f-remise').value = d.remise;
+        }
+
+        function recalcul() {
+            let sous = 0, tva = 0, cout = 0, coutConnu = true;
+            corps.querySelectorAll('tr.ligne').forEach(tr => {
+                const q = num(tr.querySelector('.f-qte').value), pu = num(tr.querySelector('.f-pu').value);
+                const r = num(tr.querySelector('.f-remise').value), t = num(tr.querySelector('.f-tva').value);
+                const ht = q * pu * (1 - r / 100);
+                sous += ht; tva += ht * t / 100;
+                tr.querySelector('.f-total').textContent = fmt(ht);
+                const o = option(tr), alerte = tr.querySelector('.f-alerte'); let msg = '';
+                if (o) {
+                    const c = num(o.dataset.cout); cout += q * c;
+                    const net = pu * (1 - r / 100);
+                    if (c > 0 && net < c) msg = 'Vente à perte (coût : ' + fmt(c) + ' Ar)';
+                    else if (r > num(o.dataset.remisemax)) msg = 'Remise supérieure au maximum autorisé (' + o.dataset.remisemax + ' %)';
+                } else if (ht > 0) coutConnu = false;
+                alerte.textContent = msg; alerte.classList.toggle('d-none', !msg);
+            });
+            const rg = Math.min(Math.max(num($('#remise_globale').value), 0), 100), coef = 1 - rg / 100;
+            const ht = sous * coef, tvaF = tva * coef;
+            $('#t-sous').textContent = fmt(sous); $('#t-remise').textContent = '- ' + fmt(sous - ht);
+            $('#t-ht').textContent = fmt(ht); $('#t-tva').textContent = fmt(tvaF); $('#t-ttc').textContent = fmt(ht + tvaF);
+            const ok = ht > 0 && cout > 0 && coutConnu;
+            $('#t-marge').textContent = ok ? ((ht - cout) / ht * 100).toFixed(1) + ' %' : '—';
+            window.docMarge = ok ? ((sous - cout) / sous * 100) : null;
+            window.docSous = sous;
+        }
+
+        function ajouter(init) {
+            corps.appendChild(modele.content.cloneNode(true));
+            const tr = corps.lastElementChild;
+            if (init && init.produit) tr.querySelector('.sel-produit').value = init.produit;
+            if (init && init.desc !== undefined) {
+                tr.querySelector('.f-desc').value = init.desc; tr.querySelector('.f-qte').value = init.qte;
+                tr.querySelector('.f-pu').value = init.pu; tr.querySelector('.f-remise').value = init.remise; tr.querySelector('.f-tva').value = init.tva;
+            } else if (init && init.produit) surProduit(tr, true);
+            recalcul(); return tr;
+        }
+
+        $('#btn-ajouter').addEventListener('click', () => ajouter());
+        corps.addEventListener('change', e => { if (e.target.classList.contains('sel-produit')) surProduit(e.target.closest('tr'), true); recalcul(); });
+        corps.addEventListener('input', recalcul);
+        corps.addEventListener('click', e => {
+            const b = e.target.closest('.btn-suppr'); if (!b) return;
+            b.closest('tr').remove(); if (!corps.querySelector('tr.ligne')) ajouter(); recalcul();
+        });
+        $('#remise_globale').addEventListener('input', recalcul);
+
+        // ---------- Assistant IA ----------
+        const client = $('#client_id'), panneau = $('#ia-panel'), sortie = $('#ia-resultat');
+        const el = (tag, cls, texte) => { const e = document.createElement(tag); if (cls) e.className = cls; if (texte !== undefined) e.textContent = texte; return e; };
+        async function ia(action, params) {
+            const q = new URLSearchParams();
+            Object.entries(params).forEach(([k, v]) => (Array.isArray(v) ? v : [v]).forEach(x => { if (x !== null && x !== undefined && x !== '') q.append(k, x); }));
+            const r = await fetch(panneau.dataset.url.replace('ACTION', action) + '?' + q.toString());
+            const data = await r.json(); if (!r.ok) throw new Error(data.erreur || 'Erreur');
+            return data;
+        }
+        const produitsChoisis = () => [...corps.querySelectorAll('.sel-produit')].map(s => s.value).filter(Boolean);
+
+        if (panneau) panneau.addEventListener('click', async e => {
+            const b = e.target.closest('[data-ia]'); if (!b) return;
+            const clientId = client.value;
+            if (!clientId) { sortie.replaceChildren(el('div', 'text-danger', 'Choisissez d’abord un client.')); return; }
+            sortie.replaceChildren(el('div', 'text-muted', 'Analyse en cours…'));
+            try {
+                const a = b.dataset.ia, rg = $('#remise_globale').value, box = el('div');
+                if (a === 'remise') {
+                    const d = await ia('remise', { client_id: clientId, montant_ht: Math.round(window.docSous || 0), marge: window.docMarge === null ? '' : window.docMarge.toFixed(1) });
+                    box.append(el('div', 'fs-4 fw-bold text-primary', d.remise_pct + ' %'),
+                        el('div', 'text-muted', 'Maximum acceptable : ' + d.remise_max_pct + ' % · segment ' + d.segment + ' (score ' + d.score + '/100)'),
+                        el('p', 'mt-2 mb-2', d.justification));
+                    const ap = el('button', 'btn btn-sm btn-primary', 'Appliquer cette remise'); ap.type = 'button';
+                    ap.onclick = () => { $('#remise_globale').value = d.remise_pct; recalcul(); };
+                    box.append(ap);
+                } else if (a === 'complementaires') {
+                    const ids = produitsChoisis(); if (!ids.length) throw new Error('Ajoutez au moins un produit.');
+                    const d = await ia('complementaires', { produit_ids: ids });
+                    if (!d.suggestions.length) box.append(el('div', 'text-muted', 'Aucune suggestion pour le moment.'));
+                    d.suggestions.forEach(s => {
+                        const row = el('div', 'd-flex justify-content-between align-items-center border-bottom py-1');
+                        const t = el('div'); t.append(el('div', 'fw-semibold', s.designation), el('small', 'text-muted', s.raison));
+                        const add = el('button', 'btn btn-sm btn-outline-success', '+'); add.type = 'button'; add.onclick = () => ajouter({ produit: String(s.produit_id) });
+                        row.append(t, add); box.append(row);
+                    });
+                } else if (a === 'negociation') {
+                    const d = await ia('negociation', { client_id: clientId, remise: rg });
+                    d.strategies.forEach(s => {
+                        const c = el('div', 'border rounded p-2 mb-2');
+                        c.append(el('div', 'fw-semibold', s.nom), el('div', null, s.description),
+                            el('small', 'text-muted d-block mt-1', 'Concession : ' + s.concession + ' · Contrepartie : ' + s.contrepartie));
+                        box.append(c);
+                    });
+                } else if (a === 'argumentaire') {
+                    const d = await ia('argumentaire', { client_id: clientId, produit_ids: produitsChoisis(), remise: rg });
+                    box.append(el('p', 'mb-2', d.texte), el('small', 'text-muted d-block mb-2', d.source === 'LLM' ? 'Rédigé par IA' : 'Modèle de texte'));
+                    const cp = el('button', 'btn btn-sm btn-outline-primary', 'Ajouter aux notes'); cp.type = 'button';
+                    cp.onclick = () => { const n = $('#notes'); n.value = (n.value ? n.value + '\n\n' : '') + d.texte; };
+                    box.append(cp);
+                }
+                sortie.replaceChildren(box);
+            } catch (err) { sortie.replaceChildren(el('div', 'text-danger', err.message)); }
+        });
+
+        document.querySelectorAll('#lignes-init span').forEach(s => ajouter({ ...s.dataset }));
+        if (!corps.querySelector('tr.ligne')) ajouter();
+    })();
+    </script>
+        {% endif %}
+</body>
+</html>

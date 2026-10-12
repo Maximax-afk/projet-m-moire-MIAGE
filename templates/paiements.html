@@ -1,0 +1,161 @@
+{% load l10n %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paiements - FactuApp</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        body { min-height: 100vh; background-color: #f8f9fa; }
+        .sidebar { width: 280px; min-height: 100vh; background-color: #0f172a; }
+        .nav-link { color: #94a3b8; font-size: 0.9rem; border-radius: 8px; padding: 8px 12px; margin-bottom: 3px; }
+        .nav-link:hover { color: #ffffff; background-color: #1e293b; }
+        .nav-link.active { color: #ffffff; background-color: #4f46e5; }
+        .section-title { font-size: 0.7rem; text-transform: uppercase; font-weight: 700; color: #64748b; padding: 10px 12px 4px 12px; }
+        .card-title-sm { font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: #6c757d; }
+        .thead-sm { font-size: 0.75rem; text-transform: uppercase; }
+    </style>
+</head>
+<body class="d-flex">
+    <aside class="sidebar text-white d-flex flex-column flex-shrink-0 shadow">
+        <div class="d-flex align-items-center gap-3 p-3 border-bottom border-secondary border-opacity-25" style="height: 70px;">
+            <div class="bg-primary text-white rounded-3 fw-bold d-flex align-items-center justify-content-center fs-5 shadow-sm" style="width: 40px; height: 40px;">F</div>
+            <div>
+                <h6 class="mb-0 fw-bold text-uppercase text-white">Factura<span class="text-primary">Pro</span></h6>
+                <small class="text-secondary" style="font-size: 0.65rem;">GESTION COMMERCIALE</small>
+            </div>
+        </div>
+        <nav class="p-3 flex-grow-1 overflow-auto">
+            <a href="/" class="nav-link d-flex align-items-center gap-2"><i class="bi bi-grid-1x2-fill"></i><span>Tableau de bord</span></a>
+            <a href="/facture.html" class="nav-link d-flex align-items-center gap-2"><i class="bi bi-receipt text-info"></i><span>Factures</span></a>
+            <a href="/devis.html" class="nav-link d-flex align-items-center gap-2"><i class="bi bi-file-earmark-text text-primary"></i><span>Devis & Estimations</span></a>
+            <a href="/clients.html" class="nav-link d-flex align-items-center gap-2"><i class="bi bi-people text-warning"></i><span>Clients</span></a>
+            <a href="/produits.html" class="nav-link d-flex align-items-center gap-2"><i class="bi bi-box-seam text-success"></i><span>Produits & Services</span></a>
+            <a href="/paiements.html" class="nav-link active d-flex align-items-center gap-2"><i class="bi bi-credit-card text-success"></i><span>Paiements</span></a>
+            <a href="/recherche.html" class="nav-link d-flex align-items-center gap-2"><i class="bi bi-search text-danger"></i><span>Recherche de factures</span></a>
+            <a href="/rapports.html" class="nav-link d-flex align-items-center gap-2"><i class="bi bi-bar-chart-line text-warning"></i><span>Rapports & Stats</span></a>
+            <a href="/utilisateurs.html" class="nav-link d-flex align-items-center gap-2"><i class="bi bi-gear text-secondary"></i><span>Gestion des utilisateurs</span></a>
+        </nav>
+    </aside>
+
+    <main class="flex-grow-1 d-flex flex-column vh-100 overflow-auto">
+        <header class="bg-white border-bottom px-4 d-flex align-items-center justify-content-between flex-shrink-0" style="height: 70px;">
+            <div>
+                <h5 class="mb-0 fw-bold text-dark">Paiements & Règlements</h5>
+                <small class="text-muted">Comptant, acomptes et règlements partiels — chaque paiement recalcule la facture</small>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="/recherche.html?q_statut=EN_RETARD" class="btn btn-outline-danger btn-sm px-3 rounded-pill fw-semibold"><i class="bi bi-exclamation-octagon me-1"></i> Factures en retard</a>
+            </div>
+        </header>
+
+        <div class="p-4">
+            {% for m in messages %}
+            <div class="alert alert-{% if m.tags == 'error' %}danger{% else %}{{ m.tags|default:'info' }}{% endif %} alert-dismissible fade show py-2" role="alert">{{ m }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+            {% endfor %}
+
+            <!-- Indicateurs -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4"><div class="card border-0 shadow-sm rounded-3 p-3 bg-white">
+                    <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Paiements affichés</small>
+                    <h4 class="fw-bolder text-success mt-2 mb-0">{{ total_affiche|floatformat:"0g" }} Ar</h4>
+                    <small class="text-muted mt-1 d-block">{{ liste_paiements|length }} paiement{{ liste_paiements|length|pluralize }}</small>
+                </div></div>
+                <div class="col-md-4"><div class="card border-0 shadow-sm rounded-3 p-3 bg-white">
+                    <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Reste à encaisser</small>
+                    <h4 class="fw-bolder text-danger mt-2 mb-0">{{ reste_total|floatformat:"0g" }} Ar</h4>
+                    <small class="text-muted mt-1 d-block">{{ factures_en_attente|length }} facture{{ factures_en_attente|length|pluralize }} ouverte{{ factures_en_attente|length|pluralize }}</small>
+                </div></div>
+            </div>
+
+            {% if acces.paiement_creer %}
+            <!-- Enregistrer un paiement -->
+            <div class="card border-0 shadow-sm rounded-3 mb-4 bg-white"><div class="card-body p-4">
+                <h6 class="card-title-sm mb-3">Enregistrer un paiement</h6>
+                <form method="post" action="/paiements.html" class="row g-3">{% csrf_token %}
+                    <div class="col-md-5">
+                        <label class="form-label small fw-semibold text-secondary">Facture</label>
+                        <select name="facture_id" id="pay-facture" class="form-select form-select-sm" required>
+                            <option value="">— Choisir une facture impayée —</option>
+                            {% for f in factures_en_attente %}<option value="{{ f.pk }}" data-reste="{{ f.reste_a_payer|unlocalize }}">{{ f.numero }} — {{ f.client.nom_ou_raison_sociale }} (reste {{ f.reste_a_payer|floatformat:"0g" }} Ar){% if f.est_en_retard %} ⚠ en retard{% endif %}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-semibold text-secondary">Montant (Ar)</label>
+                        <div class="input-group input-group-sm">
+                            <input type="number" step="0.01" min="0" name="montant" id="pay-montant" class="form-control" required>
+                            <button type="button" class="btn btn-outline-secondary" id="pay-solde" title="Remplir avec le reste à payer">Solde</button>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-semibold text-secondary">Mode</label>
+                        <select name="mode_paiement" class="form-select form-select-sm">{% for v,l in modes_paiement %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-semibold text-secondary">Date</label>
+                        <input type="date" name="date_paiement" class="form-control form-control-sm" value="{% now 'Y-m-d' %}">
+                    </div>
+                    <div class="col-md-5"><label class="form-label small fw-semibold text-secondary">Référence (transaction / chèque)</label><input type="text" name="reference_transaction" class="form-control form-control-sm"></div>
+                    <div class="col-md-5"><label class="form-label small fw-semibold text-secondary">Remarques</label><input type="text" name="notes" class="form-control form-control-sm"></div>
+                    <div class="col-md-2 d-flex align-items-end"><button class="btn btn-success btn-sm rounded-pill w-100 fw-semibold"><i class="bi bi-cash-coin me-1"></i>Enregistrer</button></div>
+                </form>
+                <p class="small text-muted mt-3 mb-0">Le type (comptant ou partiel) est déterminé automatiquement. Pour un paiement en plusieurs fois, créez un échéancier depuis la fiche de la facture.</p>
+            </div></div>
+            {% endif %}
+
+            <!-- Historique -->
+            <div class="card border-0 shadow-sm rounded-3 bg-white"><div class="card-body p-4">
+                <h6 class="card-title-sm mb-3">Historique des paiements</h6>
+                <form method="get" action="/paiements.html" class="row g-2 mb-3">
+                    <div class="col-md-5"><input type="text" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="N° de facture ou client…"></div>
+                    <div class="col-md-3"><select name="mode" class="form-select form-select-sm"><option value="">Tous les modes</option>{% for v,l in modes_paiement %}<option value="{{ v }}" {% if request.GET.mode == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+                    <div class="col-md-2 d-flex gap-1">
+                        <button class="btn btn-primary btn-sm rounded-pill flex-fill"><i class="bi bi-search"></i></button>
+                        <a href="/paiements.html" class="btn btn-outline-secondary btn-sm rounded-pill" title="Réinitialiser"><i class="bi bi-arrow-counterclockwise"></i></a>
+                    </div>
+                </form>
+                <div class="table-responsive"><table class="table align-middle mb-0">
+                    <thead class="table-light text-secondary thead-sm"><tr><th>Reçu</th><th>Date</th><th>Facture</th><th>Client</th><th>Mode</th><th>Type</th><th class="text-end">Montant</th><th>Référence</th><th>Enregistré par</th><th></th></tr></thead>
+                    <tbody>
+                    {% for p in liste_paiements %}
+                    <tr>
+                        <td class="font-monospace small">{{ p.numero_recu }}</td>
+                        <td>{{ p.date_paiement|date:"d/m/Y" }}</td>
+                        <td><a href="{% url 'facture_detail' p.facture_id %}" class="font-monospace text-primary fw-bold text-decoration-none">{{ p.facture.numero_affichage }}</a></td>
+                        <td class="fw-semibold">{{ p.client.nom_ou_raison_sociale }}</td>
+                        <td>{{ p.get_mode_paiement_display }}</td>
+                        <td>
+                            {% if p.type_paiement == 'COMPTANT' %}<span class="badge bg-success-subtle text-success rounded-pill">Comptant</span>
+                            {% elif p.type_paiement == 'ECHEANCE' %}<span class="badge bg-info-subtle text-info rounded-pill">Échéance</span>
+                            {% else %}<span class="badge bg-warning-subtle text-warning rounded-pill">Partiel</span>{% endif %}
+                        </td>
+                        <td class="text-end fw-bold text-success">{{ p.montant|floatformat:"0g" }} Ar</td>
+                        <td class="small text-muted">{{ p.reference_transaction|default:"" }}</td>
+                        <td class="small text-muted">{{ p.enregistre_par|default:"" }}</td>
+                        <td class="text-end">
+                            {% if acces.paiement_supprimer %}<form method="post" action="{% url 'supprimer_paiement' p.pk %}" onsubmit="return confirm('Supprimer ce paiement ? La facture sera recalculée.');">{% csrf_token %}<button class="btn btn-sm btn-outline-danger" title="Supprimer"><i class="bi bi-trash"></i></button></form>{% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="10" class="text-center text-muted py-5"><i class="bi bi-credit-card display-6 d-block mb-2 text-secondary opacity-50"></i><span>Aucun paiement enregistré.</span></td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table></div>
+            </div></div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    (function () {
+        const f = document.getElementById('pay-facture'), m = document.getElementById('pay-montant'), b = document.getElementById('pay-solde');
+        if (!f) return;
+        const reste = () => (f.selectedOptions[0] && f.selectedOptions[0].dataset.reste) || '';
+        f.addEventListener('change', () => { m.value = reste(); });   // propose directement le solde
+        b.addEventListener('click', () => { m.value = reste(); });
+    })();
+    </script>
+</body>
+</html>
