@@ -61,7 +61,6 @@
             {% csrf_token %}
             <div class="row g-3">
                 <div class="col-lg-9">
-                    <!-- Client et dates -->
                     <div class="card border-0 shadow-sm rounded-3 mb-3 bg-white"><div class="card-body p-4">
                         <h6 class="card-title-sm mb-3">Client et dates</h6>
                         <div class="row g-3">
@@ -83,7 +82,6 @@
                         </div>
                     </div></div>
 
-                    <!-- Lignes -->
                     <div class="card border-0 shadow-sm rounded-3 mb-3 bg-white"><div class="card-body p-4">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h6 class="card-title-sm mb-0">Lignes de la facture</h6>
@@ -99,7 +97,6 @@
                         </div>
                         <p class="text-muted small mt-2 mb-0">Choisissez un produit pour préremplir prix, TVA et remise (modifiables). Une ligne libre sert aux prestations ponctuelles.</p>
 
-                        <!-- Modèle d'une ligne (cloné par le script) -->
                         <template id="ligne-modele">
                             <tr class="ligne">
                                 <td style="min-width: 240px;">
@@ -119,11 +116,9 @@
                             </tr>
                         </template>
 
-                        <!-- Lignes existantes (mode modification) : lues par le script -->
                         <div id="lignes-init" hidden>{% for l in lignes %}<span data-produit="{{ l.produit_id|default_if_none:'' }}" data-desc="{{ l.description }}" data-qte="{{ l.quantite|unlocalize }}" data-pu="{{ l.prix_unitaire_ht|unlocalize }}" data-remise="{{ l.remise_pct|unlocalize }}" data-tva="{{ l.taux_tva|unlocalize }}"></span>{% endfor %}</div>
                     </div></div>
 
-                    <!-- Notes et conditions -->
                     <div class="card border-0 shadow-sm rounded-3 bg-white"><div class="card-body p-4"><div class="row g-3">
                         <div class="col-md-6"><label class="form-label small fw-semibold text-secondary">Notes</label>
                             <textarea name="notes" id="notes" rows="3" class="form-control form-control-sm">{{ facture.notes }}</textarea></div>
@@ -132,7 +127,7 @@
                     </div></div></div>
                 </div>
 
-                <!-- Colonne droite -->
+
                 <div class="col-lg-3">
                     <div class="position-sticky" style="top: 0;">
                         <div class="card border-0 shadow-sm rounded-3 mb-3 bg-white"><div class="card-body p-4">
@@ -224,7 +219,7 @@
             corps.appendChild(modele.content.cloneNode(true));
             const tr = corps.lastElementChild;
             if (init && init.produit) { tr.querySelector('.sel-produit').value = init.produit; }
-            if (init && init.desc !== undefined) {   // ligne existante : on restaure les valeurs enregistrées
+            if (init && init.desc !== undefined) {   
                 tr.querySelector('.f-desc').value = init.desc; tr.querySelector('.f-qte').value = init.qte;
                 tr.querySelector('.f-pu').value = init.pu; tr.querySelector('.f-remise').value = init.remise; tr.querySelector('.f-tva').value = init.tva;
             } else if (init && init.produit) { surProduit(tr, true); }
@@ -238,9 +233,8 @@
             const b = e.target.closest('.btn-suppr'); if (!b) return;
             b.closest('tr').remove(); if (!corps.querySelector('tr.ligne')) ajouter(); recalcul();
         });
-        $('#remise_globale').addEventListener('input', recalcul);
-
-        // Échéance automatique selon le délai de paiement du client
+        $('#remise_globale').addEventListener('input', recalcul
+                                              
         const client = $('#client_id'), echeance = $('#date_echeance'), emission = $('#date_emission');
         client.addEventListener('change', () => {
             const o = client.selectedOptions[0]; if (!o || !o.dataset.delai) return;
@@ -303,8 +297,7 @@
                 sortie.replaceChildren(box);
             } catch (err) { sortie.replaceChildren(el('div', 'text-danger', err.message)); }
         });
-
-        // Démarrage : lignes enregistrées (modification) ou une ligne vide (création)
+        
         document.querySelectorAll('#lignes-init span').forEach(s => ajouter({ ...s.dataset }));
         if (!corps.querySelector('tr.ligne')) ajouter();
     })();
