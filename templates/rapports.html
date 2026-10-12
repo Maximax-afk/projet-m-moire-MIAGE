@@ -15,10 +15,9 @@
         .section-title { font-size: 0.7rem; text-transform: uppercase; font-weight: 700; color: #64748b; padding: 10px 12px 4px 12px; }
         .card-title-sm { font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: #6c757d; }
         .thead-sm { font-size: 0.75rem; text-transform: uppercase; }
-        /* Barres du graphique : la hauteur vient de data-pct (voir le script en bas de page) */
         .barre { height: 0; min-height: 3px; }
         .barre[data-pct="0"] { min-height: 0; }
-        /* Impression : on ne garde que le rapport */
+
         @media print {
             .sidebar, .no-print, header { display: none !important; }
             body { display: block !important; background: #fff !important; }
@@ -76,7 +75,6 @@
             <div class="alert alert-{% if m.tags == 'error' %}danger{% else %}{{ m.tags|default:'info' }}{% endif %} alert-dismissible fade show py-2 no-print" role="alert">{{ m }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
             {% endfor %}
 
-            <!-- Filtres -->
             <div class="card border-0 shadow-sm rounded-3 mb-4 bg-white no-print"><div class="card-body p-4">
                 <h6 class="card-title-sm mb-3">Période et filtres du rapport</h6>
                 <form method="get" action="/rapports.html" class="row g-3">
@@ -150,7 +148,6 @@
                 </div></div>
             </div>
 
-            <!-- Analyse -->
             <div class="row g-3 mb-4">
                 <div class="col-lg-6"><div class="card border-0 shadow-sm rounded-3 h-100 bg-white"><div class="card-body p-4">
                     <h6 class="card-title-sm mb-3">Chiffre d'affaires HT par mois ({% now "Y" %})</h6>
@@ -175,7 +172,6 @@
                 </div></div></div>
             </div>
 
-            <!-- Détail -->
             <div class="card border-0 shadow-sm rounded-3 bg-white"><div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h6 class="card-title-sm mb-0">Détail des factures</h6>
