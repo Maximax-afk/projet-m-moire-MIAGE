@@ -71,7 +71,6 @@
             </div>
 
             {% if acces.paiement_creer %}
-            <!-- Enregistrer un paiement -->
             <div class="card border-0 shadow-sm rounded-3 mb-4 bg-white"><div class="card-body p-4">
                 <h6 class="card-title-sm mb-3">Enregistrer un paiement</h6>
                 <form method="post" action="/paiements.html" class="row g-3">{% csrf_token %}
@@ -105,7 +104,7 @@
             </div></div>
             {% endif %}
 
-            <!-- Historique -->
+    
             <div class="card border-0 shadow-sm rounded-3 bg-white"><div class="card-body p-4">
                 <h6 class="card-title-sm mb-3">Historique des paiements</h6>
                 <form method="get" action="/paiements.html" class="row g-2 mb-3">
