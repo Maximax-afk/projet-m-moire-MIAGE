@@ -73,7 +73,6 @@
             <div class="alert alert-{% if m.tags == 'error' %}danger{% else %}{{ m.tags|default:'info' }}{% endif %} alert-dismissible fade show py-2 no-print" role="alert">{{ m }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
             {% endfor %}
 
-            <!-- Filtres -->
             <div class="card border-0 shadow-sm rounded-3 mb-4 bg-white no-print"><div class="card-body p-4">
                 <h6 class="card-title-sm mb-3">Filtres de recherche</h6>
                 <form method="get" action="/recherche.html" class="row g-3">
@@ -107,7 +106,6 @@
                 </form>
             </div></div>
 
-            <!-- Résultats -->
             <div class="card border-0 shadow-sm rounded-3 bg-white"><div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h6 class="card-title-sm mb-0">Résultats</h6>
