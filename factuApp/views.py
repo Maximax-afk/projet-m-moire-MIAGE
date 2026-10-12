@@ -113,10 +113,6 @@ def _retour(request, defaut):
         return redirect(cible)
     return redirect(defaut)
 
-
-# ========================================================
-# LIGNES DE DOCUMENT (communes aux devis et aux factures)
-# ========================================================
 def _enregistrer_lignes(request, document, modele_ligne):
     """
     Lit les champs de ligne du formulaire et crée les lignes du document.
@@ -184,11 +180,6 @@ def index(request):
     contexte["nb_notifications"] = Notification.non_lues(request.user).count()
     return render(request, "index.html", contexte)
 
-
-
-# ========================================================
-# 2. FACTURES
-# ========================================================
 @permission_requise("facture.creer")
 def creer_facture(request):
     params = ParametresEntreprise.charger()
@@ -322,14 +313,10 @@ def facture_action(request, id, action):
             messages.success(request, "Facture envoyée par e-mail.")
     except ValidationError as e:
         _erreurs(request, e)
-    except OSError as e:  # serveur SMTP injoignable
+    except OSError as e:  
         messages.error(request, f"Envoi impossible : {e}")
     return destination
 
-
-# ========================================================
-# 3. DEVIS
-# ========================================================
 @permission_requise("devis.voir")
 def devis(request):
     if request.method == "POST":
@@ -462,10 +449,6 @@ def devis_action(request, id, action):
         messages.error(request, f"Envoi impossible : {e}")
     return redirect("devis")
 
-
-# ========================================================
-# 4. CLIENTS
-# ========================================================
 def _appliquer_client(client, P):
     mapping_texte = {"nom": "nom_ou_raison_sociale", "email": "email", "telephone": "telephone", "nif": "nif",
                      "stat": "stat", "rcs": "rcs", "adresse": "adresse", "ville": "ville",
@@ -574,10 +557,6 @@ def reactiver_client(request, id):
     messages.success(request, "Client réactivé.")
     return redirect("clients")
 
-
-# ========================================================
-# 5. PRODUITS, CATÉGORIES, STOCK
-# ========================================================
 
 def _appliquer_produit(produit, P):
     for champ in ("designation", "description", "type_article", "unite"):
@@ -717,9 +696,6 @@ def creer_categorie(request):
     return redirect("produits")
 
 
-# ========================================================
-# 6. PAIEMENTS
-# ========================================================
 @permission_requise("paiement.voir")
 def paiements(request):
     if request.method == "POST":
@@ -791,9 +767,6 @@ def facture_echeancier(request, id):
     return redirect("facture_detail", id=id)
 
 
-# ========================================================
-# 7. RECHERCHE & RAPPORTS
-# ========================================================
 def _filtrer_factures(request, valides_seulement=False):
     g = request.GET
     q_statut = g.get("q_statut", "").strip() or "Tous"
@@ -837,9 +810,6 @@ def rapports(request):
     })
 
 
-# ========================================================
-# 8. EXPORTS : CSV / EXCEL / PDF
-# ========================================================
 def _texte_cellule(v):
     if hasattr(v, "strftime"):
         return v.strftime("%d/%m/%Y")
@@ -859,8 +829,8 @@ def export_factures(request, fmt):
     if fmt == "csv":
         reponse = HttpResponse(content_type="text/csv; charset=utf-8")
         reponse["Content-Disposition"] = f'attachment; filename="{nom}.csv"'
-        reponse.write("\ufeff")  # un seul BOM, en tête de fichier, pour qu'Excel lise bien les accents
-        ecrivain = csv.writer(reponse, delimiter=";")  # séparateur lu directement par Excel en français
+        reponse.write("\ufeff")  
+        ecrivain = csv.writer(reponse, delimiter=";")  
         ecrivain.writerow(entetes)
         for ligne in lignes:
             ecrivain.writerow([_texte_cellule(c) if not isinstance(c, Decimal) else f"{c:.2f}".replace(".", ",") for c in ligne])
@@ -987,7 +957,6 @@ def _pdf_rapport(entetes, lignes, synthese, filtres):
     return buffer.getvalue()
 
 
-# --- PDF d'une facture ou d'un devis ---
 def _pdf_document(doc):
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import A4
@@ -1100,9 +1069,6 @@ def devis_pdf(request, id):
     return _reponse_pdf(contenu, f"{d.numero}.pdf", request.GET.get("telecharger") == "1")
 
 
-# ========================================================
-# 9. E-MAIL ET PARTAGE
-# ========================================================
 def _envoyer_email_document(request, doc):
     contenu, erreur = _pdf_ou_501(doc)
     pieces = [(f"{doc.numero_affichage}.pdf", contenu, "application/pdf")] if contenu else []
@@ -1131,9 +1097,6 @@ def devis_partage(request, token):
     return erreur or _reponse_pdf(contenu, f"{d.numero}.pdf")
 
 
-# ========================================================
-# 10. NOTIFICATIONS
-# ========================================================
 @permission_requise("facture.voir")
 def notifications(request):
     return render(request, "notifications.html", {
@@ -1295,10 +1258,6 @@ def ia_classification(request):
         },
     )
 
-
-# ========================================================
-# 12. UTILISATEURS & PARAMÈTRES (administrateur)
-# ========================================================
 @permission_requise("utilisateur.gerer")
 def utilisateurs(request):
     if request.method == "POST":
@@ -1380,7 +1339,7 @@ def parametres(request):
             if champ in P:
                 setattr(p, champ, int(_dec(P[champ], Decimal(getattr(p, champ)))))
         for champ in PARAMETRES_BOOLEENS:
-            setattr(p, champ, champ in P)  # case à cocher : absente = décochée
+            setattr(p, champ, champ in P)  
         if request.FILES.get("logo"):
             p.logo = request.FILES["logo"]
         p.save()
@@ -1391,10 +1350,6 @@ def parametres(request):
         "compteurs": CompteurNumero.objects.order_by("-annee", "code"),
     })
 
-
-# ========================================================
-# 13. MON COMPTE (profil, mot de passe, préférences personnelles)
-# ========================================================
 CAPACITES = [
     ("Créer et valider des factures", "facture.creer"), ("Annuler une facture", "facture.annuler"),
     ("Créer des devis", "devis.creer"), ("Enregistrer des paiements", "paiement.creer"),
@@ -1492,7 +1447,6 @@ def ia_classification(request):
                 )
                 remise_max = min(Decimal("100"), remise_max)
 
-                # Proposition prudente : la moitié de la remise maximale
                 remise_conseillee = remise_max / Decimal("2")
 
                 if remise_demandee > 0:
@@ -1524,7 +1478,6 @@ def ia_classification(request):
                         "pour préserver la marge cible."
                     )
 
-                # Détection d'un écart de prix, si une référence est saisie
                 historique = request.POST.get("prix_historique", "").strip()
                 alerte_prix = "Comparaison impossible sans prix historique."
                 ecart_prix = None
@@ -1552,7 +1505,6 @@ def ia_classification(request):
                             "au prix historique : aucun seuil d'alerte atteint."
                         )
 
-                # Informations commerciales fournies par l'utilisateur
                 profil = request.POST.get("profil_client", "").strip()
                 produits = request.POST.get(
                     "produits_complementaires", ""
