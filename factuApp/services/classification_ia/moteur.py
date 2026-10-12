@@ -52,7 +52,7 @@ def classifier_facture_pdf(fichier):
     X = vectoriseur.fit_transform(textes)
     X_facture = vectoriseur.transform([texte])
 
-    # Entraîner le modèle de classification
+    # Simulation de modèle de classification
     modele = LogisticRegression(max_iter=1000)
     modele.fit(X, categories)
 
